@@ -21,8 +21,11 @@ NAME="mongosync-${PLATFORM}-${ARCH}-${VERSION}"
 URL="${BASE_URL}/${NAME}.tgz"
 DEST="mongosync-${PLATFORM}"   # compose mount ./mongosync-ubuntu2404 => /mongosync
 
+# Binary la Linux: tren Windows/WSL thieu lib thi khong chay duoc => chi la thong tin phu
+binary_version() { "./${DEST}/bin/mongosync" --version 2>/dev/null | head -1 || true; }
+
 if [ -x "${DEST}/bin/mongosync" ] && [ "${FORCE:-0}" != "1" ]; then
-  echo "Da co ${DEST}/bin/mongosync ($("./${DEST}/bin/mongosync" --version 2>/dev/null | head -1 || echo 'khong chay duoc tren may nay'))"
+  echo "Da co ${DEST}/bin/mongosync ($(binary_version))"
   echo "Dung FORCE=1 de tai lai."
   exit 0
 fi
@@ -49,4 +52,4 @@ tar -xzf "${TMP}/${NAME}.tgz" -C "${DEST}" --strip-components=1
 chmod +x "${DEST}/bin/mongosync"
 
 echo "OK: ${DEST}/bin/mongosync"
-"./${DEST}/bin/mongosync" --version 2>/dev/null | head -1 || echo "(binary la Linux: chay trong container, khong chay duoc tren Windows)"
+v="$(binary_version)"; echo "${v:-(binary Linux: chay trong container /mongosync/bin/mongosync)}"

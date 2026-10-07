@@ -48,6 +48,11 @@ cd generator-go && go run .          # = run;  go run . stats | clean
 Đổi `TARGET=dst` để đổ vào cluster đích (hoặc `TARGET=custom` + `MONGO_URI`).
 
 ## 4. Container mongosync (Ubuntu trơn)
+Binary mongosync không nằm trong git. Tải về và giải nén vào `mongosync-ubuntu2404/` trước (cần `curl`, `tar`; chạy được trên Git Bash/WSL):
+```bash
+./download-mongosync.sh            # mặc định 1.22.0; chọn bản khác: ./download-mongosync.sh 1.21.0
+FORCE=1 ./download-mongosync.sh    # tải lại, container đang chạy vẫn thấy file mới
+```
 Service `mongosync` là `ubuntu:24.04` thuần, chỉ mount `./mongosync-ubuntu2404` vào `/mongosync` (không cài/cấu hình gì sẵn). Tự setup trong đó:
 ```bash
 docker compose exec mongosync bash
