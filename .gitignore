@@ -1,0 +1,31 @@
+# ===== self-practice (root) — rule chung cho moi sub-project =====
+# Env / secret (giu lai file mau)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies / build output
+node_modules/
+dist/
+*.exe
+*.exe~
+*.test
+*.out
+
+# Log / tam
+*.log
+*.tmp
+*.swp
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Archive tai ve (binary, file lon)
+*.tgz
+*.tar.gz
+*.zip

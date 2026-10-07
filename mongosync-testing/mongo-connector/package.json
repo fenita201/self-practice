@@ -1,0 +1,14 @@
+{
+  "name": "mongo-connector",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Simulated app: discovers DBs/collections, then reads/writes random docs at a configurable rate (config via .env)",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mongodb": "^6.10.0"
+  }
+}

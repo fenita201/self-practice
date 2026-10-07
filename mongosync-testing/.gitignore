@@ -1,0 +1,6 @@
+# mongosync-testing
+.env
+
+# Binary mongosync tai ve (~70MB) + file nen — tai lai tu trang download cua MongoDB
+# mongosync-ubuntu2404/
+mongosync-ubuntu2404-*.tgz

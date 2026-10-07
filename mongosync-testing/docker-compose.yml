@@ -1,0 +1,177 @@
+name: mongosync-testing
+
+# 2 replica set (3 node / cluster), MongoDB CE, auth + keyFile.
+# Moi node nghe 1 port rieng va publish cung port ra host, de ca container lan host
+# (qua hosts file) deu ket noi duoc bang cung "hostname:port" trong rs config.
+
+x-mongo: &mongo
+  image: mongo:${MONGO_VERSION:-8.0}
+  restart: unless-stopped
+  # WiredTiger mo 1 file/collection + 1 file/index (+ connection). Mac dinh soft=1024 => "Too many open files"
+  # va mongod crash khi co vai tram collection. Khuyen nghi cua MongoDB: 64000.
+  ulimits:
+    nofile: { soft: 64000, hard: 64000 }
+  depends_on:
+    keyfile-init:
+      condition: service_completed_successfully
+
+services:
+  keyfile-init:
+    image: mongo:${MONGO_VERSION:-8.0}
+    restart: "no"
+    entrypoint: ["bash", "/scripts/keyfile-init.sh"]
+    volumes:
+      - ./mongo/keyfile-init.sh:/scripts/keyfile-init.sh:ro
+      - mongo-keyfile:/keyfile
+
+  # ---------------- SOURCE cluster ----------------
+  src-mongo1:
+    <<: *mongo
+    hostname: src-mongo1
+    command: ["mongod", "--replSet", "${SRC_RS:-src-rs}", "--keyFile", "/keyfile/keyfile", "--bind_ip_all", "--port", "${SRC_PORT_1:-27017}", "--oplogSize", "1024", "--wiredTigerCacheSizeGB", "0.5"]
+    ports: ["${SRC_PORT_1:-27017}:${SRC_PORT_1:-27017}"]
+    volumes: ["mongo-keyfile:/keyfile:ro", "src-mongo1-data:/data/db"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port ${SRC_PORT_1:-27017} --quiet --eval \"db.adminCommand('ping').ok\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  src-mongo2:
+    <<: *mongo
+    hostname: src-mongo2
+    command: ["mongod", "--replSet", "${SRC_RS:-src-rs}", "--keyFile", "/keyfile/keyfile", "--bind_ip_all", "--port", "${SRC_PORT_2:-27018}", "--oplogSize", "1024", "--wiredTigerCacheSizeGB", "0.5"]
+    ports: ["${SRC_PORT_2:-27018}:${SRC_PORT_2:-27018}"]
+    volumes: ["mongo-keyfile:/keyfile:ro", "src-mongo2-data:/data/db"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port ${SRC_PORT_2:-27018} --quiet --eval \"db.adminCommand('ping').ok\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  src-mongo3:
+    <<: *mongo
+    hostname: src-mongo3
+    command: ["mongod", "--replSet", "${SRC_RS:-src-rs}", "--keyFile", "/keyfile/keyfile", "--bind_ip_all", "--port", "${SRC_PORT_3:-27019}", "--oplogSize", "1024", "--wiredTigerCacheSizeGB", "0.5"]
+    ports: ["${SRC_PORT_3:-27019}:${SRC_PORT_3:-27019}"]
+    volumes: ["mongo-keyfile:/keyfile:ro", "src-mongo3-data:/data/db"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port ${SRC_PORT_3:-27019} --quiet --eval \"db.adminCommand('ping').ok\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  # Chay chung network namespace voi src-mongo1 => ket noi localhost de dung "localhost exception"
+  src-init:
+    image: mongo:${MONGO_VERSION:-8.0}
+    restart: "no"
+    network_mode: "service:src-mongo1"
+    depends_on:
+      src-mongo1: { condition: service_healthy }
+      src-mongo2: { condition: service_healthy }
+      src-mongo3: { condition: service_healthy }
+    volumes: ["./mongo/init-replset.js:/init/init-replset.js:ro"]
+    environment:
+      RS_NAME: ${SRC_RS:-src-rs}
+      RS_MEMBERS: ${MONGO_HOST:?set MONGO_HOST in .env}:${SRC_PORT_1:-27017},${MONGO_HOST}:${SRC_PORT_2:-27018},${MONGO_HOST}:${SRC_PORT_3:-27019}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin_pass}
+      SYNC_USER: ${SYNC_USER:-mongosync}
+      SYNC_PASSWORD: ${SYNC_PASSWORD:-mongosync_pass}
+    entrypoint: ["mongosh", "--quiet", "--port", "${SRC_PORT_1:-27017}", "/init/init-replset.js"]
+
+  # ---------------- DESTINATION cluster ----------------
+  dst-mongo1:
+    <<: *mongo
+    hostname: dst-mongo1
+    command: ["mongod", "--replSet", "${DST_RS:-dst-rs}", "--keyFile", "/keyfile/keyfile", "--bind_ip_all", "--port", "${DST_PORT_1:-27027}", "--oplogSize", "1024", "--wiredTigerCacheSizeGB", "0.5"]
+    ports: ["${DST_PORT_1:-27027}:${DST_PORT_1:-27027}"]
+    volumes: ["mongo-keyfile:/keyfile:ro", "dst-mongo1-data:/data/db"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port ${DST_PORT_1:-27027} --quiet --eval \"db.adminCommand('ping').ok\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  dst-mongo2:
+    <<: *mongo
+    hostname: dst-mongo2
+    command: ["mongod", "--replSet", "${DST_RS:-dst-rs}", "--keyFile", "/keyfile/keyfile", "--bind_ip_all", "--port", "${DST_PORT_2:-27028}", "--oplogSize", "1024", "--wiredTigerCacheSizeGB", "0.5"]
+    ports: ["${DST_PORT_2:-27028}:${DST_PORT_2:-27028}"]
+    volumes: ["mongo-keyfile:/keyfile:ro", "dst-mongo2-data:/data/db"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port ${DST_PORT_2:-27028} --quiet --eval \"db.adminCommand('ping').ok\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  dst-mongo3:
+    <<: *mongo
+    hostname: dst-mongo3
+    command: ["mongod", "--replSet", "${DST_RS:-dst-rs}", "--keyFile", "/keyfile/keyfile", "--bind_ip_all", "--port", "${DST_PORT_3:-27029}", "--oplogSize", "1024", "--wiredTigerCacheSizeGB", "0.5"]
+    ports: ["${DST_PORT_3:-27029}:${DST_PORT_3:-27029}"]
+    volumes: ["mongo-keyfile:/keyfile:ro", "dst-mongo3-data:/data/db"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port ${DST_PORT_3:-27029} --quiet --eval \"db.adminCommand('ping').ok\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  dst-init:
+    image: mongo:${MONGO_VERSION:-8.0}
+    restart: "no"
+    network_mode: "service:dst-mongo1"
+    depends_on:
+      dst-mongo1: { condition: service_healthy }
+      dst-mongo2: { condition: service_healthy }
+      dst-mongo3: { condition: service_healthy }
+    volumes: ["./mongo/init-replset.js:/init/init-replset.js:ro"]
+    environment:
+      RS_NAME: ${DST_RS:-dst-rs}
+      RS_MEMBERS: ${MONGO_HOST:?set MONGO_HOST in .env}:${DST_PORT_1:-27027},${MONGO_HOST}:${DST_PORT_2:-27028},${MONGO_HOST}:${DST_PORT_3:-27029}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin_pass}
+      SYNC_USER: ${SYNC_USER:-mongosync}
+      SYNC_PASSWORD: ${SYNC_PASSWORD:-mongosync_pass}
+    entrypoint: ["mongosh", "--quiet", "--port", "${DST_PORT_1:-27027}", "/init/init-replset.js"]
+
+  # ---------------- Mongosync box ----------------
+  # Ubuntu tron, khong cai/cau hinh gi san: chi mount folder mongosync. Vao: docker compose exec mongosync bash
+  mongosync:
+    image: ubuntu:24.04
+    hostname: mongosync-box
+    init: true
+    restart: unless-stopped
+    # Chi cai + chay sshd (lan dau can internet, cac lan sau bo qua). Con lai de ban tu setup.
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        if [ ! -x /usr/sbin/sshd ]; then
+          apt-get update && apt-get install -y --no-install-recommends openssh-server
+        fi
+        mkdir -p /run/sshd
+        echo "root:$${BOX_PASSWORD}" | chpasswd
+        printf 'PermitRootLogin yes\nPasswordAuthentication yes\n' > /etc/ssh/sshd_config.d/10-box.conf
+        exec /usr/sbin/sshd -D -e
+    environment:
+      BOX_PASSWORD: ${BOX_PASSWORD:-123}
+    ports: ["127.0.0.1:${BOX_SSH_PORT:-2222}:22"]
+    volumes:
+      - ./mongosync-ubuntu2404:/mongosync
+
+volumes:
+  mongo-keyfile:
+  src-mongo1-data:
+  src-mongo2-data:
+  src-mongo3-data:
+  dst-mongo1-data:
+  dst-mongo2-data:
+  dst-mongo3-data:

@@ -1,0 +1,16 @@
+{
+  "name": "mongosync-testing-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fake data generator for mongosync testing (config via ../.env)",
+  "scripts": {
+    "start": "node src/index.js run",
+    "stats": "node src/index.js stats",
+    "clean": "node src/index.js clean"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mongodb": "^6.10.0"
+  }
+}
