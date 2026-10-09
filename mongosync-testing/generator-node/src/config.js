@@ -15,11 +15,8 @@ const int = (k, d) => {
   return n;
 };
 
-function buildUri() {
-  const custom = str('MONGO_URI');
-  const target = str('TARGET', 'src');
-  if (custom) return custom;
-  if (target === 'custom') throw new Error('TARGET=custom requires MONGO_URI');
+// URI 3 node cua cluster `src` hoac `dst` (MONGO_HOST + ports + RS trong .env), bo qua MONGO_URI.
+export function buildClusterUri(target) {
   const isSrc = target === 'src';
   const ports = [1, 2, 3].map((i) => str(`${isSrc ? 'SRC' : 'DST'}_PORT_${i}`, (isSrc ? 27016 : 27026) + i));
   const host = str('MONGO_HOST');
@@ -29,6 +26,14 @@ function buildUri() {
   const user = encodeURIComponent(str('ADMIN_USER', 'admin'));
   const pass = encodeURIComponent(str('ADMIN_PASSWORD', 'admin_pass'));
   return `mongodb://${user}:${pass}@${hosts}/?replicaSet=${rs}&authSource=admin`;
+}
+
+function buildUri() {
+  const custom = str('MONGO_URI');
+  const target = str('TARGET', 'src');
+  if (custom) return custom;
+  if (target === 'custom') throw new Error('TARGET=custom requires MONGO_URI');
+  return buildClusterUri(target);
 }
 
 export const cfg = {

@@ -1,0 +1,19 @@
+[Unit]
+Description=Codex Remote web and IDE
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=REPLACE_SERVICE_USER
+WorkingDirectory=/home/REPLACE_SERVICE_USER/codex-remote
+EnvironmentFile=/home/REPLACE_SERVICE_USER/codex-remote/.env
+Environment=PATH=/home/REPLACE_SERVICE_USER/.local/bin:/home/REPLACE_SERVICE_USER/.nvm/versions/node/v24.21.0/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/REPLACE_SERVICE_USER/.nvm/versions/node/v24.21.0/bin/node /home/REPLACE_SERVICE_USER/codex-remote/dist/server/main.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

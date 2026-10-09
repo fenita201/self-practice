@@ -78,4 +78,18 @@ npm start            # Ctrl+C để dừng
 - Cứ `STATS_INTERVAL_SEC` giây in tốc độ thực tế, p50/p95 latency, lỗi, số op bị drop (khi DB không theo kịp `MAX_INFLIGHT`).
 - Trỏ `MONGO_URI` vào cluster **source** để vừa sync vừa có traffic.
 
+## 6. Kiểm tra dest đã đủ data từ source chưa
+1. **Tiến độ mongosync** (trong container): `curl -s localhost:27182/api/v1/progress`
+   - `state: RUNNING` + `info: "change event application"` + `lagTimeSeconds` nhỏ = đã copy xong, đang bám theo thay đổi.
+   - `collectionCopy.estimatedCopiedBytes` ≈ `estimatedTotalBytes` = giai đoạn copy ban đầu đã xong.
+   - `canCommit: true` = sẵn sàng commit. Dừng ghi vào source (tắt mongo-connector), đợi lag ~0, rồi `curl -s localhost:27182/api/v1/commit -XPOST --data '{}'` đến khi `state: COMMITTED`.
+2. **So sánh dữ liệu** (sau khi commit, khi source không còn ghi):
+```bash
+cd generator-node
+npm run compare                  # DB / collection / số doc / index của src vs dst; exit code 1 nếu lệch
+HASH=true npm run compare        # thêm dbHash (md5 nội dung từng collection) - chặt nhất
+COMPARE_DB_REGEX=^synctest npm run compare
+```
+Lưu ý: trong lúc mongosync còn chạy và source còn ghi thì số doc luôn lệch tạm thời (dest chậm hơn một nhịp) — chỉ so sánh sau khi dừng ghi + commit. Mongosync không sync `admin`, `config`, `local` nên `compare` bỏ qua các DB này.
+
 Dev/test only — password mặc định yếu.

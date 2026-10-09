@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/index.js run",
     "stats": "node src/index.js stats",
-    "clean": "node src/index.js clean"
+    "clean": "node src/index.js clean",
+    "compare": "node src/compare.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

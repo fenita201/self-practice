@@ -1,0 +1,33 @@
+# Dependencies and generated build files
+node_modules/
+/dist/
+/coverage/
+
+# Local environment; configuration templates belong in Git
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Runtime data, local workspaces and isolated test data
+/data/
+/workspace/
+/.test-data/
+*.sqlite
+*.sqlite-*
+instance.lock
+initial-password.txt
+
+# Browser test reports and process output
+/test-results/
+/playwright-report/
+*.log
+*.pid
+
+# OS and editor temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

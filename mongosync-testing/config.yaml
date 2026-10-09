@@ -1,0 +1,8 @@
+cluster0: "mongodb://mongosync:mongosync_pass@192.168.240.36:27017,192.168.240.36:27018,192.168.240.36:27019/?replicaSet=src-rs&authSource=admin"
+cluster1: "mongodb://mongosync:8eoQm8WkHTjUxSXv@192.168.240.36:27027,192.168.240.36:27028,192.168.240.36:27029/?replicaSet=dst-rs&authSource=admin"
+
+logPath: "/var/log/mongosync/warehouse"
+verbosity: "INFO"
+loadLevel: 3
+disableTelemetry: true
+acceptDisclaimer: true
