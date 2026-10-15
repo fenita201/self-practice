@@ -1,0 +1,7 @@
+# Thong so chung cua lab, moi unit trong infra/live deu nhan cac gia tri nay.
+# GCP project ID va Atlas org ID KHONG ghi o day: lay tu bien moi truong
+# GCP_PROJECT_ID / ATLAS_ORG_ID (xem docs/02-gcp-infra.md) de khong commit thong tin ca nhan.
+env: lab                 # prefix ten tai nguyen: lab-vpc, lab-src-1, ...
+region: us-central1      # GCP region
+zone: a                  # => us-central1-a
+atlas_region: CENTRAL_US # ma region Atlas tuong ung us-central1 (Iowa)

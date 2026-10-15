@@ -1,0 +1,47 @@
+# Gia tri cau hinh cho cac unit trong infra/live/atlas (cung quy uoc voi gcp/values.yaml).
+# org_id, API key, IP may ban lay tu infra/.env, khong ghi o day.
+
+m10-project: # huong B
+  project_name: mongosync-lab-m10
+  enable_peering: true
+  atlas_cidr_block: 10.30.0.0/21 # khong duoc trung 10.20.0.0/24, 10.21.0.0/24
+  access_subnet_name: sync # subnet GCP duoc whitelist (di qua peering)
+
+m10-cluster:
+  cluster_name: lab-m10
+  cluster_type: REPLICASET
+  major_version: "8.0"
+  provider_name: GCP
+  instance_size: M10 # tinh phi theo gio
+  node_count: 3
+  disk_size_gb: 10
+  compute_auto_scaling_enabled: false
+  storage_auto_scaling_enabled: false
+  oplog_size_mb: 1024
+  oplog_min_retention_hours: 0
+  backup_enabled: false
+  pit_enabled: false
+  enable_mongosync_permissions: true # tao role mongosyncDestination
+  database_users:
+    - username: mongosync
+      roles:
+        - role_name: mongosyncDestination
+          database_name: admin
+
+m0-project: # huong C
+  project_name: mongosync-lab-m0
+  enable_peering: false # M0 khong ho tro peering; whitelist IP NAT (+ MY_PUBLIC_IP)
+
+m0-cluster:
+  cluster_name: lab-m0
+  cluster_type: REPLICASET
+  provider_name: GCP
+  instance_size: M0 # mongosync KHONG ho tro M0
+  backup_enabled: false
+  pit_enabled: false
+  enable_mongosync_permissions: false
+  database_users:
+    - username: lab_app
+      roles:
+        - role_name: readWriteAnyDatabase
+          database_name: admin
