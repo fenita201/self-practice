@@ -1,0 +1,21 @@
+{
+  "name": "mongosync-lab-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generator, traffic connector va compare cho lab mongosync (config: tools/.env)",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "generate": "node src/generate.js run",
+    "stats": "node src/generate.js stats",
+    "clean": "node src/generate.js clean",
+    "connector": "node src/connector/index.js",
+    "compare": "node src/compare.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mongodb": "^6.10.0"
+  }
+}

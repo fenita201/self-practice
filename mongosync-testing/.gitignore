@@ -1,6 +1,26 @@
-# mongosync-testing
+# Secret / cau hinh rieng tung may
 .env
+*.pem
+*keyfile*
+!local/keyfile-init.sh
 
-# Binary mongosync tai ve (~70MB) + file nen — tai lai tu trang download cua MongoDB
-mongosync-ubuntu2404/
-mongosync-ubuntu2404-*.tgz
+# Dependency, binary tai ve
+node_modules/
+bin/
+*.tgz
+
+# Terraform / Terragrunt: cache, state (chua password), plan
+.terraform/
+.terraform.lock.hcl
+.terragrunt-cache/
+.state/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash*.log
+backend.tf
+
+# Log mongosync chay thu tren may local
+mongosync-logs/

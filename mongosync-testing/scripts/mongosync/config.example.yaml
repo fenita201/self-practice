@@ -1,0 +1,19 @@
+# Config mongosync cho lab tren GCP. Copy len VM lab-sync-1:
+#   sudo install -m 600 config.example.yaml /etc/mongosync/config.yaml && sudoedit /etc/mongosync/config.yaml
+# Password trong URI phai URL-encode (@ -> %40, : -> %3A, / -> %2F ...).
+#
+# cluster0 = SOURCE: 3 VM src-rs
+cluster0: "mongodb://mongosync:<SRC_SYNC_PASSWORD>@10.20.0.11:27017,10.20.0.12:27017,10.20.0.13:27017/?replicaSet=src-rs&authSource=admin"
+
+# cluster1 = DESTINATION, chon DUNG 1 dong:
+# (A) 3 VM dst-rs
+cluster1: "mongodb://mongosync:<DST_SYNC_PASSWORD>@10.20.0.21:27017,10.20.0.22:27017,10.20.0.23:27017/?replicaSet=dst-rs&authSource=admin"
+# (B) Atlas M10 qua VPC peering (private SRV, lay tu `terragrunt output cluster` o infra/live/atlas/m10-cluster)
+# cluster1: "mongodb+srv://mongosync:<ATLAS_PASSWORD>@<lab-m10-pri.xxxxx.mongodb.net>/?authSource=admin"
+
+logPath: "/var/log/mongosync"
+verbosity: "INFO"
+# 1..4: muc tai mongosync tao ra tren cluster (mac dinh 3). VM nho / M10 => de 1-2.
+loadLevel: 2
+disableTelemetry: true
+acceptDisclaimer: true
